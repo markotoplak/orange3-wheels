@@ -5,6 +5,7 @@ os: osx
 env:
   global:
     - REPO_DIR=orange3
+    - BUILD_BRANCH=master
     - BUILD_COMMIT=3.3.9
     # Token generated using:
     #    anaconda auth --create --name CI-UPLOAD --scopes "repos pypi api:read api:write"
@@ -15,12 +16,13 @@ env:
 
     # PyPi wheel build requirements
     - WHEEL_VER=0.29
-    - PIP_VER=8.1.2
+    - PIP_VER=9.0.1
     - NUMPY_BUILD_VER=1.9.3
 
   matrix:
-    - PYVER=3.4.4 NUMPY_VER=1.11.0 SCIPY_VER=0.17.1 SCIKIT_LEARN_VER==0.17.1
-    - PYVER=3.5.1 NUMPY_VER=1.11.0 SCIPY_VER=0.17.1 SCIKIT_LEARN_VER==0.17.1
+    - PYVER=3.4.4 NUMPY_VER=1.11.3 SCIPY_VER=0.17.1 SCIKIT_LEARN_VER==0.17.1
+    - PYVER=3.5.2 NUMPY_VER=1.11.3 SCIPY_VER=0.17.1 SCIKIT_LEARN_VER==0.17.1
+    - PYVER=3.6.0 NUMPY_VER=1.11.3 SCIPY_VER=0.18.1 SCIKIT_LEARN_VER==0.18.1
 
 cache:
 #  pip: true
@@ -34,20 +36,20 @@ before_install:
   - ./tools/osx/init-venv --python ${PYVER%.*} ~/.venv/${PYVER%.*}
   - source ~/.venv/${PYVER%.*}/bin/activate
   - pip install wheel==$WHEEL_VER pip==$PIP_VER
-  - pip install --no-deps --only-binary numpy numpy==$NUMPY_BUILD_VER
+  - pip install --no-deps numpy==$NUMPY_BUILD_VER
 
 install:
   - cd $REPO_DIR
+  - git fetch origin $BUILD_BRANCH
   - git checkout $BUILD_COMMIT
-  - echo $(which python)
-  - echo $(python -c "import sys; print(sys.version)")
+  - echo $(python --version) $(which python)
   - python setup.py clean --all bdist_wheel --dist-dir ../dist
   - cd ..
 
 script:
-  - pip install --only-binary numpy,scipy,scikit-learn numpy==$NUMPY_VER scipy==$SCIPY_VER scikit-learn==$SCIKIT_LEARN_VER
+  - pip install numpy==$NUMPY_VER scipy==$SCIPY_VER scikit-learn==$SCIKIT_LEARN_VER
   - pip install --no-index --find-links ./dist --no-deps --pre Orange3
-  - pip install --extra-index-url $STAGING_INDEX --only-binary numpy,scipy,scikit-learn,bottlechest Orange3
+  - pip install --extra-index-url $STAGING_INDEX Orange3
   # Cannot run full core test suite yet
   - python -c "import Orange.data, Orange.classification, Orange.regression, Orange.clustering"
 

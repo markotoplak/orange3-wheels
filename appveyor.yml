@@ -3,9 +3,10 @@
 environment:
   global:
     REPO_DIR: orange3
-    GIT_COMMIT: 3.3.9
+    BUILD_BRANCH: master
+    BUILD_COMMIT: 3.3.9
     STAGING_INDEX: https://pypi.anaconda.org/ales-erjavec/simple
-
+    NUMPY_BUILD_VER: 1.9.3
     # Token generated using:
     #    anaconda auth --create --name CI-UPLOAD --scopes "repos pypi api:read api:write"
     ANACONDA_CLOUD_TOKEN:
@@ -27,20 +28,30 @@ environment:
       # (https://github.com/numpy/numpy/issues/7607)
       BUILD_GLOBAL_OPTIONS: "build -j1"
 
+    - PYTHON: "C:\\Python36"
+      # disable threaded builds on Python 3.6 when using numpy's distutils
+      # (https://github.com/numpy/numpy/issues/7607)
+      BUILD_GLOBAL_OPTIONS: "build -j1"
+
+    - PYTHON: "C:\\Python36-x64"
+      # disable threaded builds on Python 3.6 when using numpy's distutils
+      # (https://github.com/numpy/numpy/issues/7607)
+      BUILD_GLOBAL_OPTIONS: "build -j1"
+
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
 install:
-  - "%PYTHON%\\python -m pip install wheel==0.26.* pip==8.1.*"
-  - "%PYTHON%\\python -m pip install --extra-index-url %STAGING_INDEX% --only-binary numpy numpy==1.9.3"
+  - "%PYTHON%\\python -m pip install wheel==0.26.* pip==9.*"
+  - "%PYTHON%\\python -m pip install --extra-index-url %STAGING_INDEX% numpy==%NUMPY_BUILD_VER%"
 
 build_script:
   - git submodule update --init
   - cd %REPO_DIR%
-  - git checkout %GIT_COMMIT%
+  - git fetch origin %BUILD_BRANCH%
+  - git checkout %BUILD_COMMIT%
   - "..\\tools\\win\\build.cmd %PYTHON%\\python setup.py clean --all %BUILD_GLOBAL_OPTIONS% bdist_wheel --dist-dir ../dist"
   - cd ..
-  #- "tools\\win\\build.cmd %PYTHON%\\python -m pip wheel --verbose --no-deps -w dist %WHEEL_GLOBAL_OPTIONS% ./%REPO_DIR%"
 
 test_script:
   - "%PYTHON%\\python -m venv --clear %USERPROFILE%\\testenv"
