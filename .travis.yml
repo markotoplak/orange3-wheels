@@ -5,8 +5,8 @@ os: osx
 env:
   global:
     - REPO_DIR=orange3
-    - BUILD_BRANCH=master
-    - BUILD_COMMIT=3.3.9
+    - BUILD_BRANCH=pull/1860/head
+    - BUILD_COMMIT=9108b3b
     # Token generated using:
     #    anaconda auth --create --name CI-UPLOAD --scopes "repos pypi api:read api:write"
     #- ANACONDA_CLOUD_TOKEN=...
