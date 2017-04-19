@@ -32,11 +32,23 @@ cache:
     - ~/Library/Caches/vagabond
 
 before_install:
+  # Use 3.6 from python.org to download/upload reqs (need newer openssl then
+  # the system provided used in older python releases )
+  - ./tools/osx/install-python 3.6.0
+  - ./tools/osx/init-venv --python 3.6 ~/.venv/util
+  - PYTAG=${PYVER%.*}; PYTAG=${PYTAG/./}
+  - DOWNLOAD_ARGS="--python-version $PYTAG --abi cp${PYTAG}m --only-binary :all:"
+  - ~/.venv/util/bin/pip install -U pip==9.0.1
+  - ~/.venv/util/bin/pip download $DOWNLOAD_ARGS -d ./wheels --extra-index-url $STAGING_INDEX numpy==$NUMPY_BUILD_VER
+  - ~/.venv/util/bin/pip download $DOWNLOAD_ARGS -d ./wheels --extra-index-url $STAGING_INDEX numpy==$NUMPY_VER scipy==$SCIPY_VER scikit-learn==$SCIKIT_LEARN_VER
+
+  # set up the build/test env
+  - test ! "$PYVER" == 3.6.1  # https://bugs.python.org/issue29943
   - ./tools/osx/install-python $PYVER
   - ./tools/osx/init-venv --python ${PYVER%.*} ~/.venv/${PYVER%.*}
   - source ~/.venv/${PYVER%.*}/bin/activate
-  - pip install wheel==$WHEEL_VER pip==$PIP_VER
-  - pip install --no-deps numpy==$NUMPY_BUILD_VER
+  - pip install -f ./wheels wheel==$WHEEL_VER pip==$PIP_VER
+  - pip install -f ./wheels --only-binary numpy numpy==$NUMPY_BUILD_VER
 
 install:
   - cd $REPO_DIR
@@ -47,12 +59,15 @@ install:
   - cd ..
 
 script:
-  - pip install numpy==$NUMPY_VER scipy==$SCIPY_VER scikit-learn==$SCIKIT_LEARN_VER
+  - pip install -f ./wheels numpy==$NUMPY_VER scipy==$SCIPY_VER scikit-learn==$SCIKIT_LEARN_VER
   - pip install --no-index --find-links ./dist --no-deps --pre Orange3
-  - pip install --extra-index-url $STAGING_INDEX Orange3
+  - pip install --find-links ./wheels Orange3
   # Cannot run full core test suite yet
   - python -c "import Orange.data, Orange.classification, Orange.regression, Orange.clustering"
 
 after_success:
-  - pip install -q anaconda-client
-  - anaconda --token $ANACONDA_CLOUD_TOKEN upload --no-progress --label staging --force dist/*.whl
+  - md5 dist/*.whl
+  - curl --upload-file dist/*.whl https://transfer.sh/
+  - ~/.venv/util/bin/pip install -q anaconda-client
+  #- ~/.venv/util/bin/anaconda --token $ANACONDA_CLOUD_TOKEN upload --no-progress --label staging --force dist/*.whl
+  - ~/.venv/util/bin/anaconda --token $ANACONDA_CLOUD_TOKEN upload --no-progress --label testing dist/*.whl
