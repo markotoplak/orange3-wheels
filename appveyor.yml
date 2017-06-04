@@ -32,11 +32,13 @@ environment:
       # disable threaded builds on Python 3.6 when using numpy's distutils
       # (https://github.com/numpy/numpy/issues/7607)
       BUILD_GLOBAL_OPTIONS: "build -j1"
+      TEST_PYTHON: "C:\\Python36"
 
     - PYTHON: "C:\\Miniconda36-x64"
       # disable threaded builds on Python 3.6 when using numpy's distutils
       # (https://github.com/numpy/numpy/issues/7607)
       BUILD_GLOBAL_OPTIONS: "build -j1"
+      TEST_PYTHON: "C:\\Python36-x64"
 
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
@@ -56,14 +58,18 @@ build_script:
   - cd ..
 
 test_script:
+  - if not "%TEST_PYTHON%" == "" ( set "PYTHON=%TEST_PYTHON%" )
   - "%PYTHON%\\python -m venv --clear %USERPROFILE%\\testenv"
   - "%USERPROFILE%\\testenv\\Scripts\\activate"
-#  - python -c "import sys; print(sys.prefix)"
-#  - python -c "import sys; print(sys.version)"
-#  - python -m pip install pip==8.1.*
-#  - python -m pip install --no-deps --no-index --find-links dist --pre Orange3
-#  - python -m pip install --extra-index-url %STAGING_INDEX%  --only-binary numpy,scipy,bottlechest,scikit-learn Orange3
-#  - python -m unittest -v Orange.tests
+  - python -c "import sys; print(sys.prefix)"
+  - python -c "import sys; print(sys.version)"
+  - python -m pip install -U pip
+  - python -m pip install --no-deps --no-index --find-links ./dist --pre Orange3
+  - python -m pip install --extra-index-url %STAGING_INDEX%  --only-binary numpy,scipy,bottleneck,scikit-learn Orange3
+  # Run test suite in the installed environment.
+  - set ORANGE_DEPRECATIONS_ERROR=1
+  - set PYTHONWARNINGS=module
+  - python -m unittest -v Orange.tests
 
 
 artifacts:
