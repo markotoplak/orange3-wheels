@@ -1,5 +1,10 @@
 # https://packaging.python.org/en/latest/appveyor/
 
+# The worker images released on May 18, 2017 have Python 3.6.1
+# see: https://bugs.python.org/issue29943
+image:
+  - Previous Visual Studio 2015
+
 environment:
   global:
     REPO_DIR: orange3
@@ -13,20 +18,20 @@ environment:
       secure: isszhpT8JyWuukJK1f7j8v64phXebwQd4NRhc7/eCkRxVz1AKTNgyoR9fxpYd7eI
 
   matrix:
-    - PYTHON: "C:\\Python34"
-
-    - PYTHON: "C:\\Python34-x64"
-      DISTUTILS_USE_SDK: "1"
-
-    - PYTHON: "C:\\Python35"
-      # disable threaded builds on Python 3.5 when using numpy's distutils
-      # (https://github.com/numpy/numpy/issues/7607)
-      BUILD_GLOBAL_OPTIONS: "build -j1"
-
-    - PYTHON: "C:\\Python35-x64"
-      # disable threaded builds on Python 3.5 when using numpy's distutils
-      # (https://github.com/numpy/numpy/issues/7607)
-      BUILD_GLOBAL_OPTIONS: "build -j1"
+#    - PYTHON: "C:\\Python34"
+#
+#    - PYTHON: "C:\\Python34-x64"
+#      DISTUTILS_USE_SDK: "1"
+#
+#    - PYTHON: "C:\\Python35"
+#      # disable threaded builds on Python 3.5 when using numpy's distutils
+#      # (https://github.com/numpy/numpy/issues/7607)
+#      BUILD_GLOBAL_OPTIONS: "build -j1"
+#
+#    - PYTHON: "C:\\Python35-x64"
+#      # disable threaded builds on Python 3.5 when using numpy's distutils
+#      # (https://github.com/numpy/numpy/issues/7607)
+#      BUILD_GLOBAL_OPTIONS: "build -j1"
 
     - PYTHON: "C:\\Python36"
       # disable threaded builds on Python 3.6 when using numpy's distutils
@@ -73,4 +78,4 @@ artifacts:
 on_success:
   - "echo %CWD%"
   - "%PYTHON%\\python -m pip install anaconda-client"
-  - "%PYTHON%\\Scripts\\anaconda --token %ANACONDA_CLOUD_TOKEN% upload --no-progress --label staging --force dist\\*.whl"
+  # - "%PYTHON%\\Scripts\\anaconda --token %ANACONDA_CLOUD_TOKEN% upload --no-progress --label staging --force dist\\*.whl"
