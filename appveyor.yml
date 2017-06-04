@@ -33,12 +33,14 @@ environment:
 #      # (https://github.com/numpy/numpy/issues/7607)
 #      BUILD_GLOBAL_OPTIONS: "build -j1"
 
-    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python-custom-36"
+      PYTHON_INSTALLER: https://www.python.org/ftp/python/3.6.0/python-3.6.0.exe
       # disable threaded builds on Python 3.6 when using numpy's distutils
       # (https://github.com/numpy/numpy/issues/7607)
       BUILD_GLOBAL_OPTIONS: "build -j1"
 
-    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python-custom-36-x64"
+      PYTHON_INSTALLER: https://www.python.org/ftp/python/3.6.0/python-3.6.0-amd64.exe
       # disable threaded builds on Python 3.6 when using numpy's distutils
       # (https://github.com/numpy/numpy/issues/7607)
       BUILD_GLOBAL_OPTIONS: "build -j1"
@@ -46,11 +48,17 @@ environment:
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
 
+init:
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
+
+
 install:
-  - "%PYTHON%\\python -m pip install wheel==0.26.* pip==9.*"
-  - "%PYTHON%\\python -m pip install --extra-index-url %STAGING_INDEX% numpy==%NUMPY_BUILD_VER%"
+  - if not "%PYTHON_INSTALLER%" == "" ( tools\win\install-python.bat )
   # https://bugs.python.org/issue29943
   - '%PYTHON%\python -c "import sys; assert not sys.version_info[:3] == (3, 6, 1)"'
+
+  - "%PYTHON%\\python -m pip install wheel==0.26.* pip==9.*"
+  - "%PYTHON%\\python -m pip install --extra-index-url %STAGING_INDEX% numpy==%NUMPY_BUILD_VER%"
 
 build_script:
   - git submodule update --init
@@ -69,6 +77,9 @@ test_script:
 #  - python -m pip install --no-deps --no-index --find-links dist --pre Orange3
 #  - python -m pip install --extra-index-url %STAGING_INDEX%  --only-binary numpy,scipy,bottlechest,scikit-learn Orange3
 #  - python -m unittest -v Orange.tests
+
+on_finish:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 
 artifacts:
